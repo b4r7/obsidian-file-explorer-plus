@@ -5,6 +5,13 @@ import { PathSuggest } from "./ui/suggest";
 import FileExplorerPlusPlugin from "./main";
 import { PathsActivatedModal } from "./ui/modals";
 
+
+export enum ItemAction {
+	PIN = "PIN",
+	MUTE = "MUTE",
+	HIDE = "HIDE"
+}
+
 export interface TagFilter {
     name: string;
     active: boolean;
@@ -153,8 +160,7 @@ export default class FileExplorerPlusSettingTab extends PluginSettingTab {
                     });
             });
 		new Setting(this.containerEl)
-            .setName("Use custom prefix")
-            .setDesc("Use the character(s) defined below instead of the pin icon")
+            .setName("Prefix pinned items")            
             .addToggle((toggle) => {
                 toggle
                     .setValue(this.plugin.settings.useCustomPinChar)
@@ -163,10 +169,13 @@ export default class FileExplorerPlusSettingTab extends PluginSettingTab {
                         this.plugin.settings.useCustomPinChar = isActive;
 						
                         this.plugin.saveSettings();
+						this.display();
                         this.plugin.fileExplorer!.requestSort();
                     });
             });
-		new Setting(this.containerEl)
+
+		if (this.plugin.settings.useCustomPinChar){
+			new Setting(this.containerEl)
 			.setName("Prefix")
 			.setDesc("Can be one or more character, emoji, or even html")
 			.addText((text) => {
@@ -176,10 +185,26 @@ export default class FileExplorerPlusSettingTab extends PluginSettingTab {
 						this.plugin.settings.customPinChar = value;
 
 						this.plugin.saveSettings();
-                        this.plugin.fileExplorer!.requestSort();
+						this.plugin.fileExplorer!.requestSort();
 
-					});
+					})
+			
+					
 			})
+			.addExtraButton((button) => {
+				button
+					.setIcon("undo-2")
+					.setTooltip("Revert to default")
+					.onClick(() => {
+						this.plugin.settings.customPinChar = UNSEEN_FILES_DEFAULT_SETTINGS.customPinChar;
+
+						this.plugin.saveSettings();
+						this.display();
+						this.plugin.fileExplorer!.requestSort();
+					});
+			});
+		}
+		
 
         
 
@@ -208,9 +233,11 @@ export default class FileExplorerPlusSettingTab extends PluginSettingTab {
 							this.plugin.settings.useCustomMuteChar = isActive;
 							
 							this.plugin.saveSettings();
+							this.display();
 							this.plugin.fileExplorer!.requestSort();
 						});
 				});
+			if (this.plugin.settings.useCustomMuteChar)	{
 			new Setting(this.containerEl)
 				.setName("Prefix")
 				.setDesc("Can be one or more character, emoji, or even html")
@@ -225,6 +252,7 @@ export default class FileExplorerPlusSettingTab extends PluginSettingTab {
 	
 						});
 				})
+			}
 
         this.containerEl.createEl("h2", { text: "Hiding", attr: { class: "settings-header" } });
         this.containerEl.createEl("p", { text: "Hide items entirely. You can use a plugin like commander to toggle this to the explorer menu" });
