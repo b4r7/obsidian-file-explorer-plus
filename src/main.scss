@@ -48,11 +48,46 @@
 	}
 }
 
-
-.tree-item-pinned .pin-prefix:has(+ .obsidian-icon-folder-icon) {
+//remove prefix if icon is present 
+//Files
+.hide-prefix-if-icon .tree-item-pinned .pin-prefix:has(+ .obsidian-icon-folder-icon) {
 	display: none;
   }
+  //Folders
+.hide-prefix-if-icon .tree-item.nav-folder .pin-prefix:has(+ .nav-folder-collapse-indicator + .obsidian-icon-folder-icon) {	
+	display: none;
+}
 
-.tree-item-pinned .obsidian-icon-folder-icon {
+//color the icon instead
+.hide-prefix-if-icon .tree-item-pinned .obsidian-icon-folder-icon {
 	color: var(--link-color)
 }
+
+
+//color collapse indicator instead of using prefix
+.color-folder-toggle .tree-item-pinned.nav-folder {
+	
+	.pin-prefix {
+		display: none;
+	}
+	
+	svg{
+		color: var(--link-color);
+	}
+}
+
+
+
+//select collapse indicator if it has an icon
+// .tree-item.nav-folder .nav-folder-collapse-indicator:has(+ .obsidian-icon-folder-icon){
+// 	border: 1px solid #f00;
+// }
+
+
+
+
+//   .tree-item-pinned .pin-prefix:has(+ .nav-folder-collapse-indicator) {
+// 	display: none;
+//   }
+  
+
