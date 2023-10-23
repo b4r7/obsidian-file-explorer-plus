@@ -1,9 +1,9 @@
 .file-explorer-plus {
-    &.pin-icon {
+    &.pin-prefix {
         color: var(--link-color);
         margin-right: 0.2em;        
     }
-	&.mute-icon {
+	&.mute-prefix {
        margin-right: 0.2em;        
 	}
 
@@ -48,36 +48,11 @@
 	}
 }
 
-// .tree-item-muted > .nav-folder-children > .tree-item > .nav-folder-title {
-// 	// color: var(--link-color);
-// 	opacity: 0.7;
-// }
 
-// .tree-item-muted > .nav-folder-children > .tree-item-muted > .nav-folder-title {
-// 	// color: #0f0;
-// 	opacity: 0.4;
-// }
+.tree-item-pinned .pin-prefix:has(+ .obsidian-icon-folder-icon) {
+	display: none;
+  }
 
-
-
-// .nav-folder-children > .tree-item-muted > {
-// 	.nav-file-title, .nav-folder-title {
-// 		// opacity: 0.4;
-// 		color: #0f0;
-
-
-// 	}
-// }
-
-
-.tree-item-pinned > {
-
-	.nav-file-title, .nav-folder-title {
-		// color: var(--link-color);
-		// opacity: 0.4;
-	}
-
-	// opacity: 0.8;
-	// color: var(--link-color);
-	// text-decoration: dotted;
+.tree-item-pinned .obsidian-icon-folder-icon {
+	color: var(--link-color)
 }
