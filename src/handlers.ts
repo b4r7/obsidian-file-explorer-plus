@@ -159,7 +159,7 @@ export function addCommandsToFileMenu(plugin: FileExplorerPlusPlugin) {
     plugin.registerEvent(
         plugin.app.workspace.on("file-menu", (menu, path) => {
             if (path instanceof TFile) {
-                menu.addSeparator()
+                menu.addSeparator()				    
                     .addItem((item) => {
                         const index = plugin.settings.pinFilters.paths.findIndex(
                             (filter) => filter.patternType === "STRICT" && filter.type === "FILES" && filter.pattern === path.path,
@@ -258,7 +258,8 @@ export function addCommandsToFileMenu(plugin: FileExplorerPlusPlugin) {
                                     plugin.fileExplorer!.requestSort();
                                 }
                             });
-                    });
+                    })
+					.addSeparator()
             } else {
                 menu.addSeparator()
                     .addItem((item) => {
@@ -359,8 +360,9 @@ export function addCommandsToFileMenu(plugin: FileExplorerPlusPlugin) {
                                 if (plugin.settings.hideFilters.active) {
                                     plugin.fileExplorer!.requestSort();
                                 }
-                            });
-                    });
+                            })
+                    })
+					.addSeparator()
             }
         }),
     );
