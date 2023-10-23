@@ -1,9 +1,9 @@
 import { Plugin, TAbstractFile, TFolder, Vault, FileExplorerView, PathVirtualElement } from "obsidian";
 import { around } from "monkey-around";
 
-import FileExplorerPlusSettingTab, { FileExplorerPlusPluginSettings, UNSEEN_FILES_DEFAULT_SETTINGS } from "./settings";
+import FileExplorerPlusSettingTab, { FileExplorerPlusPluginSettings, ItemAction, UNSEEN_FILES_DEFAULT_SETTINGS } from "./settings";
 import { addCommandsToFileMenu, addOnRename, addOnDelete, addOnTagChange, addCommands } from "./handlers";
-import { checkPathFilter, checkTagFilter, changeVirtualElementPin, changeVirtualElementMute } from "./utils";
+import { checkPathFilter, checkTagFilter, changeVirtualElement } from "./utils";
 
 export default class FileExplorerPlusPlugin extends Plugin {
     settings: FileExplorerPlusPluginSettings;
@@ -50,6 +50,7 @@ export default class FileExplorerPlusPlugin extends Plugin {
                     return function (...args: any[]) {
                         old.call(this, ...args);
 
+						
                         if (!this.hiddenVChildren) {
                             this.hiddenVChildren = [];
                         }
@@ -95,6 +96,7 @@ export default class FileExplorerPlusPlugin extends Plugin {
 
 						//Apply pinned filters
                         if (plugin.settings.pinFilters.active) {
+							
                             const pathsToPin = plugin.getPathsToPin(paths);
 							
 													
@@ -119,11 +121,11 @@ export default class FileExplorerPlusPlugin extends Plugin {
 
                                 if (pathsToPinLookUp[vEl.file.path]) {
 									
-                                    vEl = changeVirtualElementPin(vEl, true, plugin.settings.useCustomPinChar, plugin.settings.customPinChar);
+                                    vEl = changeVirtualElement(vEl, true, plugin.settings, ItemAction.PIN);
                                     vEl.info.pinned = true;
                                     pinnedVirtualElements.push(vEl);
                                 } else {
-                                    vEl = changeVirtualElementPin(vEl, false, plugin.settings.useCustomPinChar, plugin.settings.customPinChar);
+                                    vEl = changeVirtualElement(vEl, false, plugin.settings, ItemAction.PIN);
                                     vEl.info.pinned = false;
                                     notPinnedVirtualElements.push(vEl);
                                 }
@@ -131,7 +133,7 @@ export default class FileExplorerPlusPlugin extends Plugin {
 
                             virtualElements = pinnedVirtualElements.concat(notPinnedVirtualElements);
                         } else {
-                            virtualElements = virtualElements.map((vEl) => changeVirtualElementPin(vEl, false, plugin.settings.useCustomPinChar, plugin.settings.customPinChar));
+                            virtualElements = virtualElements.map((vEl) => changeVirtualElement(vEl, false, this, ItemAction.PIN));
                         }
 
 						// Apply mute filters
@@ -151,11 +153,11 @@ export default class FileExplorerPlusPlugin extends Plugin {
 
                             for (let vEl of virtualElements) {
                                 if (pathsToMuteLookUp[vEl.file.path]) {
-                                    vEl = changeVirtualElementMute(vEl, true, plugin.settings.useCustomMuteChar, plugin.settings.customMuteChar);
+                                    vEl = changeVirtualElement(vEl, true, plugin.settings, ItemAction.MUTE);
                                     vEl.info.muted = true;
                                     mutedVirtualElements.push(vEl);
                                 } else {
-                                    vEl = changeVirtualElementMute(vEl, false, plugin.settings.useCustomMuteChar, plugin.settings.customMuteChar);
+									vEl = changeVirtualElement(vEl, false, plugin.settings, ItemAction.MUTE);
                                     vEl.info.muted = false;
                                     notMutedVirtualElements.push(vEl);
                                 }
@@ -163,7 +165,7 @@ export default class FileExplorerPlusPlugin extends Plugin {
 
                             virtualElements = notMutedVirtualElements.concat(mutedVirtualElements);
                         } else {
-                            virtualElements = virtualElements.map((vEl) => changeVirtualElementMute(vEl, false, plugin.settings.useCustomMuteChar, plugin.settings.customMuteChar));
+                            virtualElements = virtualElements.map((vEl) => changeVirtualElement(vEl, false, plugin.settings, ItemAction.MUTE));
                         }
 
 						
@@ -178,7 +180,7 @@ export default class FileExplorerPlusPlugin extends Plugin {
 
     onunload() {
         for (const path in this.fileExplorer!.fileItems) {
-            this.fileExplorer!.fileItems[path] = changeVirtualElementPin(this.fileExplorer!.fileItems[path], false);
+            this.fileExplorer!.fileItems[path] = changeVirtualElement(this.fileExplorer!.fileItems[path], false, this.settings, ItemAction.MUTE); //changeVirtualElementPin(this.fileExplorer!.fileItems[path], false);
         }
 
         this.fileExplorer!.requestSort();
