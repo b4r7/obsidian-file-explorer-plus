@@ -168,6 +168,8 @@ export default class FileExplorerPlusPlugin extends Plugin {
                             virtualElements = virtualElements.map((vEl) => changeVirtualElement(vEl, false, plugin.settings, ItemAction.MUTE));
                         }
 
+						plugin.setFileexplorerClass(plugin.settings.hidePrefixIfIcon, 'hide-prefix-if-icon');
+						plugin.setFileexplorerClass(plugin.settings.colorFolderToggle, 'color-folder-toggle');
 						
 
                         this.vChildren.setChildren(virtualElements);
@@ -194,6 +196,27 @@ export default class FileExplorerPlusPlugin extends Plugin {
         await this.saveData(this.settings);
     }
 
+	setFileexplorerClass(val: boolean, ...classes: string[]) {
+		this.removeFileexplorerClass(...classes);
+		if (val) {
+			this.addFileexplorerClass(...classes);
+		} 
+	}
+
+	addFileexplorerClass(...classes: string[]) {
+		console.log(this.fileExplorer);
+		// this.fileExplorer?.containerEl.addClass(...classes);
+		this.fileExplorer?.containerEl.querySelector('div.nav-files-container')?.addClass(...classes);
+
+	}
+	removeFileexplorerClass(...classes: string[]) {
+		console.log(this.fileExplorer);
+		// this.fileExplorer?.containerEl.addClass(...classes);
+		this.fileExplorer?.containerEl.querySelector('div.nav-files-container')?.removeClass(...classes);
+
+	}
+
+	
     getPathsToPin(paths: (TAbstractFile | null)[]): TAbstractFile[] {
         return paths.filter((path) => {
             if (!path) {
