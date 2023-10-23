@@ -34,6 +34,11 @@ export interface FileExplorerPlusPluginSettings {
 	useCustomMuteChar: boolean;
 	customMuteChar: string;
 
+	hidePrefixIfIcon: boolean;
+	colorFolderToggle: boolean;
+
+
+
     pinFilters: {
         active: boolean;
         tags: TagFilter[];
@@ -66,6 +71,10 @@ export const UNSEEN_FILES_DEFAULT_SETTINGS: FileExplorerPlusPluginSettings = {
 	customPinChar: '•',
 	useCustomMuteChar: false,
 	customMuteChar: '◦',
+
+	hidePrefixIfIcon: true,
+	colorFolderToggle: true,
+
     pinFilters: {
         active: true,
         tags: [
@@ -177,7 +186,7 @@ export default class FileExplorerPlusSettingTab extends PluginSettingTab {
 		if (this.plugin.settings.useCustomPinChar){
 			new Setting(this.containerEl)
 			.setName("Prefix")
-			.setDesc("Can be one or more character, emoji, or even html")
+			.setDesc("Can be one or more character, or emoji (no html)")
 			.addText((text) => {
 				text.setPlaceholder("")
 					.setValue(this.plugin.settings.customPinChar)
@@ -204,6 +213,37 @@ export default class FileExplorerPlusSettingTab extends PluginSettingTab {
 					});
 			});
 		}
+
+		new Setting(this.containerEl)
+            .setName("Hide prefix if an iconize icon is present")            
+            .addToggle((toggle) => {
+                toggle
+                    .setValue(this.plugin.settings.hidePrefixIfIcon)
+                    .onChange((isActive) => {
+						
+                        this.plugin.settings.hidePrefixIfIcon = isActive;
+						
+			            this.plugin.saveSettings();
+						this.display();
+                        this.plugin.fileExplorer!.requestSort();
+						
+                    });
+            });
+			new Setting(this.containerEl)
+            .setName("Color folder toggles instead of prefixing")            
+            .addToggle((toggle) => {
+                toggle
+                    .setValue(this.plugin.settings.colorFolderToggle)
+                    .onChange((isActive) => {
+						
+                        this.plugin.settings.colorFolderToggle = isActive;
+						
+			            this.plugin.saveSettings();
+						this.display();
+                        this.plugin.fileExplorer!.requestSort();
+						
+                    });
+            });
 		
 
         
@@ -240,7 +280,7 @@ export default class FileExplorerPlusSettingTab extends PluginSettingTab {
 			if (this.plugin.settings.useCustomMuteChar)	{
 			new Setting(this.containerEl)
 				.setName("Prefix")
-				.setDesc("Can be one or more character, emoji, or even html")
+				.setDesc("Can be one or more character, or emoji (no html)")
 				.addText((text) => {
 					text.setPlaceholder("")
 						.setValue(this.plugin.settings.customMuteChar)
