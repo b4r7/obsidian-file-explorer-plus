@@ -1,7 +1,7 @@
 import { FuzzySuggestModal, Modal, TFile, TFolder } from "obsidian";
 
 import FileExplorerPlusPlugin from "src/main";
-import { Filter, TagFilter, PathFilter } from "src/settings";
+import { Filter, TagFilter, PathFilter, ItemAction } from "src/settings";
 import { checkPathFilter, checkTagFilter } from "src/utils";
 
 export class InputFilterNameModal extends FuzzySuggestModal<Filter> {
@@ -93,7 +93,7 @@ export class InputFilterNameModal extends FuzzySuggestModal<Filter> {
 export class PathsActivatedModal extends Modal {
     constructor(
         private plugin: FileExplorerPlusPlugin,
-        private actionType: "PIN" | "HIDE" | "MUTE",
+        private actionType: ItemAction,
         private specificFilter?: Filter,
         private filterType?: "PATH" | "TAG",
     ) {
@@ -103,8 +103,8 @@ export class PathsActivatedModal extends Modal {
     onOpen() {
         const { contentEl } = this;
         const files = this.app.vault.getAllLoadedFiles();
-
-        let pathsActivated;
+		
+        let pathsActivated: any;
         let pathFilters: PathFilter[];
         let tagFilters: TagFilter[];
 
