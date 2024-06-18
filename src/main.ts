@@ -92,6 +92,8 @@ export default class FileExplorerPlusPlugin extends Plugin {
 
                         // only get visible vChildren
                         virtualElements = this.vChildren.children;
+						// console.log("Test");
+						// console.log(virtualElements);
 						paths = virtualElements.map((el) => el.file);
 
 						//Apply pinned filters
@@ -99,6 +101,7 @@ export default class FileExplorerPlusPlugin extends Plugin {
 							
                             const pathsToPin = plugin.getPathsToPin(paths);
 							
+					// console.log(pathsToPin);
 													
 
                             const pathsToPinLookUp = pathsToPin.reduce(
@@ -204,14 +207,12 @@ export default class FileExplorerPlusPlugin extends Plugin {
 	}
 
 	addFileexplorerClass(...classes: string[]) {
-		console.log(this.fileExplorer);
-		// this.fileExplorer?.containerEl.addClass(...classes);
+		// console.log(this.fileExplorer);
 		this.fileExplorer?.containerEl.querySelector('div.nav-files-container')?.addClass(...classes);
 
 	}
 	removeFileexplorerClass(...classes: string[]) {
-		console.log(this.fileExplorer);
-		// this.fileExplorer?.containerEl.addClass(...classes);
+		// console.log(this.fileExplorer);		
 		this.fileExplorer?.containerEl.querySelector('div.nav-files-container')?.removeClass(...classes);
 
 	}
