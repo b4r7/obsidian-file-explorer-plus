@@ -1,27 +1,157 @@
-import { TAbstractFile, TFile, TFolder, setIcon, PathVirtualElement, TagCache } from "obsidian";
+import { TAbstractFile, TFile, TFolder, PathVirtualElement, TagCache } from "obsidian";
 import wcmatch from "wildcard-match";
 
-import { PathFilter, TagFilter } from "./settings";
+import { PathFilter, TagFilter, ItemAction, FileExplorerPlusPluginSettings } from "./settings";
 
-export function changeVirtualElementPin(vEl: PathVirtualElement, pin: boolean): PathVirtualElement {
-    if (pin && !vEl.el.hasClass("tree-item-pinned")) {
-        vEl.el.addClass("tree-item-pinned");
 
-        const pinDiv = document.createElement("div");
-        pinDiv.addClass("file-explorer-plus");
-        pinDiv.addClass("pin-icon");
-        setIcon(pinDiv, "pin");
-        vEl.el.firstChild?.insertBefore(pinDiv, vEl.el.firstChild.firstChild);
-    } else if (!pin) {
-        vEl.el.removeClass("tree-item-pinned");
+export function changeVirtualElement(vEl: PathVirtualElement, enabled: boolean, settings: FileExplorerPlusPluginSettings, actionType: ItemAction) {
+	// console.log(settings);
 
-        const pinIcons = Array.from((vEl.el.firstChild as HTMLElement).children).filter((el: HTMLElement) => el.hasClass("pin-icon"));
+	const el = vEl.el;
 
-        pinIcons.forEach((icon: HTMLElement) => vEl.el.firstChild?.removeChild(icon));
-    }
+	let usePrefix = false;
+	let prefixString = '';
+	
+	let classNameParent = "";
+	let classNamePrefix = ""
 
-    return vEl;
+	
+	// let classNamesPrefix: string[] = [];
+
+	if (actionType == ItemAction.PIN) {
+		usePrefix = settings.useCustomPinChar;
+		prefixString = settings.customPinChar;
+
+		classNameParent = "tree-item-pinned";
+		classNamePrefix = "pin-prefix";
+	}
+
+	if (actionType == ItemAction.MUTE) {
+		usePrefix = settings.useCustomMuteChar;
+		prefixString = settings.customMuteChar;
+
+		classNameParent = "tree-item-muted";
+		classNamePrefix = "mute-prefix";
+	}
+
+	//Remove all previous mentions, fails silently when not present.
+	el.removeClass(classNameParent);
+	const prefixes = Array.from((vEl.el.firstChild as HTMLElement).children).filter((el: HTMLElement) => el.hasClass(classNamePrefix));
+	prefixes.forEach((icon: HTMLElement) => vEl.el.firstChild?.removeChild(icon));
+	
+	//Add new element
+
+	if (enabled && !el.hasClass(classNameParent)) {
+        vEl.el.addClass(classNameParent);
+
+		if (usePrefix && prefixString !== '') {
+			
+
+			const prefixDiv = document.createElement("div");
+			const prefixDivText = document.createTextNode(prefixString);
+			prefixDiv.appendChild(prefixDivText);
+			
+			prefixDiv.addClass("file-explorer-plus");
+			prefixDiv.addClass(classNamePrefix);
+
+			
+
+			//prefixDiv.innerHTML = prefixString;				
+				
+			vEl.el.firstChild?.insertBefore(prefixDiv, vEl.el.firstChild.firstChild);	        
+		} 
+    } 
+
+	return vEl;
 }
+
+
+// export function changeVirtualElementPinOld(vEl: PathVirtualElement, pin: boolean): PathVirtualElement {
+//     if (pin && !vEl.el.hasClass("tree-item-pinned")) {
+//         vEl.el.addClass("tree-item-pinned");
+
+//         const pinDiv = document.createElement("div");
+//         pinDiv.addClass("file-explorer-plus");
+//         pinDiv.addClass("pin-icon");
+//         setIcon(pinDiv, "pin");
+//         vEl.el.firstChild?.insertBefore(pinDiv, vEl.el.firstChild.firstChild);
+//     } else if (!pin) {
+//         vEl.el.removeClass("tree-item-pinned");
+
+//         const pinIcons = Array.from((vEl.el.firstChild as HTMLElement).children).filter((el: HTMLElement) => el.hasClass("pin-icon"));
+
+//         pinIcons.forEach((icon: HTMLElement) => vEl.el.firstChild?.removeChild(icon));
+//     }
+
+//     return vEl;
+// }
+
+// export function changeVirtualElementPin(vEl: PathVirtualElement, pin: boolean, useCustomPinChar: boolean = false, customPinChar: string = ''): PathVirtualElement {
+
+
+// 	//First remove the old prefix
+// 	// if (vEl.el.hasClass("tree-item-pinned")) {
+// 		vEl.el.removeClass("tree-item-pinned");
+// 		const pinIcons = Array.from((vEl.el.firstChild as HTMLElement).children).filter((el: HTMLElement) => el.hasClass("pin-icon"));
+// 		pinIcons.forEach((icon: HTMLElement) => vEl.el.firstChild?.removeChild(icon));
+// 	// }
+
+//     if (pin && !vEl.el.hasClass("tree-item-pinned")) {
+//         vEl.el.addClass("tree-item-pinned");
+
+// 		// console.log(useCustomPinChar);
+
+// 		const pinDiv = document.createElement("div");
+// 		pinDiv.addClass("file-explorer-plus");
+// 		pinDiv.addClass("pin-icon");
+
+// 		if (!useCustomPinChar) {
+
+// 			setIcon(pinDiv, "pin");
+// 		} else {
+// 			pinDiv.innerHTML = customPinChar;		
+// 		}
+
+
+// 		vEl.el.firstChild?.insertBefore(pinDiv, vEl.el.firstChild.firstChild);	
+
+
+
+//     } 
+
+
+//     return vEl;
+// }
+
+// export function changeVirtualElementMute(vEl: PathVirtualElement, muted: boolean, useCustomMuteChar: boolean = false, customMuteChar: string = ''): PathVirtualElement {
+// 		//First remove the old prefix
+// 		// console.log(vEl.el);
+// 		vEl.el.removeClass("tree-item-muted");
+// 		const pinIcons = Array.from((vEl.el.firstChild as HTMLElement).children).filter((el: HTMLElement) => el.hasClass("mute-icon"));
+// 		pinIcons.forEach((icon: HTMLElement) => vEl.el.firstChild?.removeChild(icon));
+
+
+//     if (muted && !vEl.el.hasClass("tree-item-muted")) {
+//         vEl.el.addClass("tree-item-muted");
+
+// 		// console.log(useCustomPinChar);
+// 		if (useCustomMuteChar) {
+// 		const prefixDiv = document.createElement("div");
+// 		prefixDiv.addClass("file-explorer-plus");
+// 		prefixDiv.addClass("mute-icon");
+
+// 		prefixDiv.innerHTML = customMuteChar;		
+
+// 		// console.log('element to add', prefixDiv);
+// 		// console.log('vEl.el.firstChild', vEl.el.firstChild);
+// 		vEl.el.firstChild?.insertBefore(prefixDiv, vEl.el.firstChild.firstChild);	
+// 		// console.log('vEl.el.firstChild', vEl.el);
+// 		}
+
+//     } 
+//     return vEl;
+// }
+
 
 export function checkPathFilter(filter: PathFilter, file: TAbstractFile): boolean {
     if (!filter.active || filter.pattern === "") {

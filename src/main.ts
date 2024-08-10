@@ -1,9 +1,9 @@
 import { Plugin, TAbstractFile, FileExplorerView, WorkspaceLeaf, PathVirtualElement } from "obsidian";
 import { around } from "monkey-around";
 
-import FileExplorerPlusSettingTab, { FileExplorerPlusPluginSettings, UNSEEN_FILES_DEFAULT_SETTINGS } from "./settings";
+import FileExplorerPlusSettingTab, { FileExplorerPlusPluginSettings, ItemAction, UNSEEN_FILES_DEFAULT_SETTINGS } from "./settings";
 import { addCommandsToFileMenu, addOnRename, addOnDelete, addOnTagChange, addCommands } from "./handlers";
-import { checkPathFilter, checkTagFilter, changeVirtualElementPin } from "./utils";
+import { checkPathFilter, checkTagFilter, changeVirtualElement } from "./utils";
 
 export default class FileExplorerPlusPlugin extends Plugin {
     settings: FileExplorerPlusPluginSettings;
@@ -97,11 +97,12 @@ export default class FileExplorerPlusPlugin extends Plugin {
 
                             const pinnedVirtualElements = sortedChildren.filter((vEl) => {
                                 if (pathsToPinLookUp[vEl.file.path]) {
-                                    vEl = changeVirtualElementPin(vEl, true);
+                                    vEl = changeVirtualElement(vEl, true, plugin.settings, ItemAction.PIN);
                                     vEl.info.pinned = true;
                                     return true;
                                 } else {
-                                    vEl = changeVirtualElementPin(vEl, false);
+                                    vEl = changeVirtualElement(vEl, false, plugin.settings, ItemAction.PIN);
+
                                     vEl.info.pinned = false;
                                     return false;
                                 }
@@ -116,11 +117,57 @@ export default class FileExplorerPlusPlugin extends Plugin {
 
                             sortedChildren = pinnedVirtualElements.concat(notPinnedVirtualElements);
                         } else {
-                            sortedChildren = sortedChildren.map((vEl) => changeVirtualElementPin(vEl, false));
+                            sortedChildren = sortedChildren.map((vEl) => changeVirtualElement(vEl, false, plugin.settings, ItemAction.PIN));
                         }
 
-                        return sortedChildren;
-                    };
+
+						if (plugin.settings.muteFilters.active) {
+							const pathsToMute = plugin.getPathsToMute(paths);
+
+							// console.log(pathsToMute);
+	
+							const pathsToMuteLookUp = pathsToMute.reduce(
+								(acc, path) => {
+									acc[path.path] = true;
+									return acc;
+								},
+								{} as { [key: string]: boolean },
+							);
+	
+							const mutedVirtualElements = sortedChildren.filter((vEl) => {
+								if (pathsToMuteLookUp[vEl.file.path]) {
+									vEl = changeVirtualElement(vEl, true, plugin.settings, ItemAction.MUTE);
+									vEl.info.muted = true;
+									return true;
+								} else {
+									vEl = changeVirtualElement(vEl, false, plugin.settings, ItemAction.MUTE);
+									vEl.info.muted = false;
+									return false;
+								}
+							});
+							const notMutedVirtualElements = sortedChildren.filter((vEl) => {
+								if (pathsToMuteLookUp[vEl.file.path]) {
+									return false;
+								} else {
+									return true;
+								}
+							});
+	
+							sortedChildren = notMutedVirtualElements.concat(mutedVirtualElements);
+						} else {
+							sortedChildren = sortedChildren.map((vEl) => changeVirtualElement(vEl, false, plugin.settings, ItemAction.MUTE));
+						}
+
+						plugin.setFileexplorerClass(plugin.settings.hidePrefixIfIcon, 'hide-prefix-if-icon');
+						plugin.setFileexplorerClass(plugin.settings.colorFolderToggle, 'color-folder-toggle');
+						plugin.setFileexplorerClass(plugin.settings.moveIconsToMargin, 'move-icons-to-margin');
+	
+						return sortedChildren;
+						
+					};
+
+
+					
                 },
             }),
         );
@@ -138,7 +185,8 @@ export default class FileExplorerPlusPlugin extends Plugin {
         }
 
         for (const path in fileExplorer!.fileItems) {
-            fileExplorer!.fileItems[path] = changeVirtualElementPin(fileExplorer!.fileItems[path], false);
+            // fileExplorer!.fileItems[path] = changeVirtualElementPin(fileExplorer!.fileItems[path], false);
+			fileExplorer!.fileItems[path] = changeVirtualElement(fileExplorer!.fileItems[path], false, this.settings, ItemAction.MUTE);
         }
 
         fileExplorer.requestSort();
@@ -153,6 +201,24 @@ export default class FileExplorerPlusPlugin extends Plugin {
         await this.saveData(this.settings);
     }
 
+	setFileexplorerClass(val: boolean, ...classes: string[]) {
+		this.removeFileexplorerClass(...classes);
+		if (val) {
+			this.addFileexplorerClass(...classes);
+		} 
+	}
+
+	addFileexplorerClass(...classes: string[]) {
+		// console.log(this.fileExplorer);
+		this.getFileExplorer()?.containerEl.querySelector('div.nav-files-container')?.addClass(...classes);
+
+	}
+	removeFileexplorerClass(...classes: string[]) {
+		// console.log(this.fileExplorer);		
+		this.getFileExplorer()?.containerEl.querySelector('div.nav-files-container')?.removeClass(...classes);
+
+	}
+
     getPathsToPin(paths: (TAbstractFile | null)[]): TAbstractFile[] {
         return paths.filter((path) => {
             if (!path) {
@@ -166,6 +232,28 @@ export default class FileExplorerPlusPlugin extends Plugin {
             }
 
             const tagFilterActivated = this.settings.pinFilters.tags.some((filter) => checkTagFilter(filter, path));
+
+            if (tagFilterActivated) {
+                return true;
+            }
+
+            return false;
+        }) as TAbstractFile[];
+    }
+
+	getPathsToMute(paths: (TAbstractFile | null)[]): TAbstractFile[] {
+        return paths.filter((path) => {
+            if (!path) {
+                return false;
+            }
+
+            const pathFilterActivated = this.settings.muteFilters.paths.some((filter) => checkPathFilter(filter, path));
+
+            if (pathFilterActivated) {
+                return true;
+            }
+
+            const tagFilterActivated = this.settings.muteFilters.tags.some((filter) => checkTagFilter(filter, path));
 
             if (tagFilterActivated) {
                 return true;

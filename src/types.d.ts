@@ -19,6 +19,7 @@ declare module "obsidian" {
             height: number;
             hidden: boolean;
             pinned?: boolean;
+			muted?:boolean;
             next: boolean;
             queued: boolean;
             width: number;

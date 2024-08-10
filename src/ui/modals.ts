@@ -7,7 +7,7 @@ import { checkPathFilter, checkTagFilter } from "src/utils";
 export class InputFilterNameModal extends FuzzySuggestModal<Filter> {
     constructor(
         private plugin: FileExplorerPlusPlugin,
-        private actionType: "PIN" | "HIDE",
+        private actionType: "PIN" | "MUTE" | "HIDE",
     ) {
         super(plugin.app);
         this.setPlaceholder("Type name of a filter...");
@@ -22,7 +22,10 @@ export class InputFilterNameModal extends FuzzySuggestModal<Filter> {
         } else if (this.actionType === "HIDE") {
             filters = filters.concat(this.plugin.settings?.hideFilters.tags || []);
             filters = filters.concat(this.plugin.settings?.hideFilters.paths || []);
-        }
+        } else if (this.actionType === "MUTE") {
+            filters = filters.concat(this.plugin.settings?.muteFilters.tags || []);
+            filters = filters.concat(this.plugin.settings?.muteFilters.paths || []);
+        }	        
 
         filters = filters.filter((x) => x.name !== "");
 
@@ -66,16 +69,30 @@ export class InputFilterNameModal extends FuzzySuggestModal<Filter> {
 
                 return filter;
             });
-        }
+        } else if (this.actionType === "MUTE") {
+            this.plugin.settings.muteFilters.tags = this.plugin.settings.muteFilters.tags.map((filter) => {
+                if (filter.name === chosenFilter.name) {
+                    filter.active = !filter.active;
+                }
+
+                return filter;
+            });
+            this.plugin.settings.muteFilters.paths = this.plugin.settings.muteFilters.paths.map((filter) => {
+                if (filter.name === chosenFilter.name) {
+                    filter.active = !filter.active;
+                }
+
+                return filter;
+            });	           
 
         this.plugin.getFileExplorer()?.requestSort();
     }
+	}
 }
-
 export class PathsActivatedModal extends Modal {
     constructor(
         private plugin: FileExplorerPlusPlugin,
-        private actionType: "PIN" | "HIDE",
+        private actionType: "PIN" | "HIDE" | "MUTE",
         private specificFilter?: Filter,
         private filterType?: "PATH" | "TAG",
     ) {
@@ -96,7 +113,10 @@ export class PathsActivatedModal extends Modal {
         } else if (this.actionType === "PIN") {
             pathFilters = this.plugin.settings.pinFilters.paths;
             tagFilters = this.plugin.settings.pinFilters.tags;
-        }
+        }  else if (this.actionType === "MUTE") {
+            pathFilters = this.plugin.settings.muteFilters.paths;
+            tagFilters = this.plugin.settings.muteFilters.tags;
+        }	        
 
         if (this.specificFilter) {
             pathsActivated = files.filter((file) => {
@@ -109,7 +129,23 @@ export class PathsActivatedModal extends Modal {
                 return false;
             });
         } else {
-            pathsActivated = this.actionType === "HIDE" ? this.plugin.getPathsToHide(files) : this.plugin.getPathsToPin(files);
+            // pathsActivated = this.actionType === "HIDE" ? this.plugin.getPathsToHide(files) : this.plugin.getPathsToPin(files);
+
+			switch (this.actionType) {
+				case "PIN":
+					pathsActivated = this.plugin.getPathsToPin(files)
+					break;
+				case "HIDE":
+					pathsActivated = this.plugin.getPathsToHide(files)
+					break;
+				case "MUTE":
+					pathsActivated = this.plugin.getPathsToMute(files)
+					break;
+
+				default:
+					pathsActivated = [];
+					break;
+			}	
         }
 
         pathsActivated = pathsActivated.map((file) => {

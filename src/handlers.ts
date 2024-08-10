@@ -13,6 +13,14 @@ export function addCommands(plugin: FileExplorerPlusPlugin) {
         },
     });
 
+	plugin.addCommand({
+        id: "toggle-mute-filter",
+        name: "Toggle mute filter",
+        callback: () => {
+            new InputFilterNameModal(plugin, "MUTE").open(); //TODO: implement a modal for the muted filters
+        },
+    });
+
     plugin.addCommand({
         id: "toggle-hide-filter",
         name: "Toggle hide filter",
@@ -26,6 +34,17 @@ export function addCommands(plugin: FileExplorerPlusPlugin) {
         name: "Toggle all pin filters",
         callback: () => {
             plugin.settings.pinFilters.active = !plugin.settings.pinFilters.active;
+
+            plugin.saveSettings();
+            plugin.getFileExplorer()?.requestSort();
+        },
+    });
+
+	plugin.addCommand({
+        id: "toggle-global-mute-filters",
+        name: "Toggle all mute filters",
+        callback: () => {
+            plugin.settings.muteFilters.active = !plugin.settings.muteFilters.active;
 
             plugin.saveSettings();
             plugin.getFileExplorer()?.requestSort();
@@ -49,13 +68,21 @@ export function addOnTagChange(plugin: FileExplorerPlusPlugin) {
         plugin.app.metadataCache.on("changed", (path, data, cache) => {
             const isPinned = plugin.getFileExplorer()!.fileItems[path.path].info.pinned;
             const isHidden = plugin.getFileExplorer()!.fileItems[path.path].info.hidden;
+			const isMuted = plugin.getFileExplorer()!.fileItems[path.path].info.muted;
+
 
             const shouldBePinned = plugin.settings.pinFilters.tags.some((filter) => checkTagFilter(filter, path));
             const shouldBeHidden = plugin.settings.hideFilters.tags.some((filter) => checkTagFilter(filter, path));
+			const shouldBeMuted = plugin.settings.muteFilters.tags.some((filter) => checkTagFilter(filter, path));
+
 
             if (isPinned !== shouldBePinned && !shouldBeHidden) {
                 plugin.getFileExplorer()?.requestSort();
 
+                return;
+            }
+			if (isMuted !== shouldBeMuted && !shouldBeHidden) {
+                plugin.getFileExplorer()?.requestSort();
                 return;
             }
 
@@ -168,6 +195,43 @@ export function addCommandsToFileMenu(plugin: FileExplorerPlusPlugin) {
                                 });
                         }
                     })
+					.addItem((item) => {
+                        const index = plugin.settings.muteFilters.paths.findIndex(
+                            (filter) => filter.patternType === "STRICT" && filter.type === "FILES" && filter.pattern === path.path,
+                        );
+
+                        if (index === -1 || !plugin.settings.muteFilters.paths[index].active) {
+                            item.setTitle("Mute")
+                                .setIcon("volume-x")
+                                .onClick(() => {
+                                    if (index === -1) {
+                                        plugin.settings.muteFilters.paths.push({
+                                            name: "",
+                                            active: true,
+                                            type: "FILES",
+                                            pattern: path.path,
+                                            patternType: "STRICT",
+                                        });
+                                    } else {
+                                        plugin.settings.muteFilters.paths[index].active = true;
+                                    }
+
+                                    plugin.saveSettings();
+                                    if (plugin.settings.muteFilters.active) {
+                                        plugin.getFileExplorer()?.requestSort();
+                                    }
+                                });
+                        } else {
+                            item.setTitle("Unmute")
+                                .setIcon("volume-2")
+                                .onClick(() => {
+                                    plugin.settings.muteFilters.paths.splice(index, 1);
+
+                                    plugin.saveSettings();
+                                    plugin.getFileExplorer()?.requestSort();
+                                });
+                        }
+                    })
                     .addItem((item) => {
                         const index = plugin.settings.hideFilters.paths.findIndex(
                             (filter) => filter.patternType === "STRICT" && filter.type === "FILES" && filter.pattern === path.path,
@@ -238,6 +302,43 @@ export function addCommandsToFileMenu(plugin: FileExplorerPlusPlugin) {
                                 .setIcon("pin-off")
                                 .onClick(() => {
                                     plugin.settings.pinFilters.paths.splice(index, 1);
+
+                                    plugin.saveSettings();
+                                    plugin.getFileExplorer()?.requestSort();
+                                });
+                        }
+                    })
+					.addItem((item) => {
+                        const index = plugin.settings.muteFilters.paths.findIndex(
+                            (filter) => filter.patternType === "STRICT" && filter.type === "DIRECTORIES" && filter.pattern === path.path,
+                        );
+
+                        if (index === -1 || !plugin.settings.muteFilters.paths[index].active) {
+                            item.setTitle("Mute Folder")
+                                .setIcon("volume-x")
+                                .onClick(() => {
+                                    if (index === -1) {
+                                        plugin.settings.muteFilters.paths.push({
+                                            name: "",
+                                            active: true,
+                                            type: "DIRECTORIES",
+                                            pattern: path.path,
+                                            patternType: "STRICT",
+                                        });
+                                    } else {
+                                        plugin.settings.muteFilters.paths[index].active = true;
+                                    }
+
+                                    plugin.saveSettings();
+                                    if (plugin.settings.muteFilters.active) {
+                                        plugin.getFileExplorer()?.requestSort();
+                                    }
+                                });
+                        } else {
+                            item.setTitle("Unmute Folder")
+                                .setIcon("volume-2")
+                                .onClick(() => {
+                                    plugin.settings.muteFilters.paths.splice(index, 1);
 
                                     plugin.saveSettings();
                                     plugin.getFileExplorer()?.requestSort();
